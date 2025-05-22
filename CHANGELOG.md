@@ -4,6 +4,10 @@ All notable changes to the `mlflow-sysmetrics` package will be documented in thi
 
 This project adheres to [Semantic Versioning](https://semver.org/) and follows changelog conventions inspired by [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v0.1.1] – 2025-05-22
+### Changed
+- Bumped patch version to trigger deployment to PyPI with no functional code changes.
+
 ## [v0.1.0] – 2025-05-22
 ### Added
 - Initial release of the `mlflow-sysmetrics` plugin for MLflow.
