@@ -9,7 +9,7 @@ Only the logic of the provider is tested — no MLflow tracking is involved.
 import pytest
 
 from mlflow_sysmetrics.system_context import SysMetricsRunContextProvider
-from mlflow_sysmetrics.constants import (
+from mlflow_sysmetrics.utils.constants import (
     TAG_CPU,
     TAG_CPU_CORES,
     TAG_MEMORY_GB,
@@ -120,3 +120,62 @@ def test_tags_fail_gracefully(
     tags: dict[str, str] = context_provider.tags()
     assert TAG_ERROR in tags
     assert "Disk error" in tags[TAG_ERROR]
+
+
+@pytest.mark.unit
+def test_gpu_tag_from_nvidia(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that the GPU tag is populated from nvidia-smi on non-macOS."""
+    from mlflow_sysmetrics import system_context
+
+    monkeypatch.setattr("platform.system", lambda: "Linux")
+    monkeypatch.setattr(
+        "subprocess.check_output",
+        lambda *args, **kwargs: b"NVIDIA GeForce RTX 4090",
+    )
+
+    provider = system_context.SysMetricsRunContextProvider()
+    tags = provider.tags()
+
+    assert tags[TAG_GPU] == "NVIDIA GeForce RTX 4090"
+
+
+@pytest.mark.unit
+def test_gpu_tag_fallback_when_nvidia_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that the GPU tag is set to 'None' if nvidia-smi fails."""
+    from mlflow_sysmetrics import system_context
+
+    monkeypatch.setattr("platform.system", lambda: "Linux")
+    monkeypatch.setattr("subprocess.check_output", lambda *a, **k: (_ for _ in ()).throw(FileNotFoundError()))
+
+    provider = system_context.SysMetricsRunContextProvider()
+    tags = provider.tags()
+
+    assert tags[TAG_GPU] == "None"
+
+
+@pytest.mark.unit
+def test_gpu_tag_from_macos_chipset(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that the GPU tag uses get_macos_gpu_chipset() on macOS."""
+    from mlflow_sysmetrics import system_context
+
+    monkeypatch.setattr("platform.system", lambda: "Darwin")
+    monkeypatch.setattr("mlflow_sysmetrics.system_context.get_macos_gpu_chipset", lambda: "Apple M2 Max")
+
+    provider = system_context.SysMetricsRunContextProvider()
+    tags = provider.tags()
+
+    assert tags[TAG_GPU] == "Apple M2 Max"
+
+
+@pytest.mark.unit
+def test_gpu_tag_from_windows(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that the GPU tag uses get_windows_gpu_name() on Windows."""
+    from mlflow_sysmetrics import system_context
+
+    monkeypatch.setattr("platform.system", lambda: "Windows")
+    monkeypatch.setattr("mlflow_sysmetrics.system_context.get_windows_gpu_name", lambda: "NVIDIA GeForce RTX 4060")
+
+    provider = system_context.SysMetricsRunContextProvider()
+    tags = provider.tags()
+
+    assert tags[TAG_GPU] == "NVIDIA GeForce RTX 4060"

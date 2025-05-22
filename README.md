@@ -1,5 +1,11 @@
 # mlflow-sysmetrics
 
+[![CI/CD Pipeline](https://github.com/hugodscarvalho/mlflow-sysmetrics/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/hugodscarvalho/mlflow-sysmetrics/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/hugodscarvalho/mlflow-sysmetrics/branch/main/graph/badge.svg)](https://codecov.io/gh/hugodscarvalho/mlflow-sysmetrics)
+[![PyPI version](https://img.shields.io/pypi/v/mlflow-sysmetrics.svg)](https://pypi.org/project/mlflow-sysmetrics/)
+[![Python versions](https://img.shields.io/pypi/pyversions/mlflow-sysmetrics.svg)](https://pypi.org/project/mlflow-sysmetrics/)
+[![License](https://img.shields.io/github/license/hugodscarvalho/mlflow-sysmetrics.svg)](LICENSE)
+
 🧠 A lightweight [MLflow Run Context Provider](https://mlflow.org/docs/latest/tracking.html#context-providers) that automatically logs system-level metrics (CPU, memory, disk, GPU, OS) as run tags.
 
 > ✅ Cross-platform · 🔌 Plugin-ready · 🧪 Tested · ⚙️ Minimal dependencies
@@ -12,15 +18,20 @@ This plugin automatically adds system environment metadata to each MLflow run. I
 
 ### ✅ Captured Tags
 
-| Tag Key            | Description                               |
-| ------------------ | ----------------------------------------- |
-| `sys.cpu`          | CPU model or architecture                 |
-| `sys.cpu_cores`    | Logical CPU core count                    |
-| `sys.memory_gb`    | Total system memory (GB)                  |
-| `sys.disk_free_gb` | Free disk space in current directory (GB) |
-| `sys.platform`     | OS and kernel version                     |
-| `sys.gpu`          | GPU name via `nvidia-smi` or "None"       |
-| `sysmetrics.error` | Captures any exception during tagging     |
+| Tag Key            | Description                                                                |
+| ------------------ | -------------------------------------------------------------------------- |
+| `sys.cpu`          | CPU model or architecture                                                  |
+| `sys.cpu_cores`    | Logical CPU core count                                                     |
+| `sys.memory_gb`    | Total system memory (GB)                                                   |
+| `sys.disk_free_gb` | Free disk space in current directory (GB)                                  |
+| `sys.platform`     | OS and kernel version                                                      |
+| `sys.gpu`          | GPU name via `nvidia-smi` (Linux), `system_profiler` (macOS), or PowerShell (Windows) |
+| `sysmetrics.error` | Captures any exception during tagging                                      |
+
+💡 GPU detection is OS-aware:
+- **macOS**: via `system_profiler`
+- **Linux**: via `nvidia-smi`
+- **Windows**: via PowerShell (`Get-CimInstance Win32_VideoController`)
 
 ---
 
@@ -84,17 +95,26 @@ You can verify system metrics manually with the debug script. Below is a sample 
 mlflow-sysmetrics/
 ├── src/mlflow_sysmetrics/
 │   ├── __init__.py
-│   ├── constants.py
-│   └── system_context.py         # Plugin implementation
+│   ├── system_context.py         # Plugin implementation
+│   └── utils/
+│       ├── __init__.py
+│       ├── constants.py          # Constants
+│       ├── mac.py                # macOS-specific logic
+│       └── windows.py            # Windows-specific GPU logic
 ├── tests/
-│   ├── unit/                     # Logic-only tests
+│   ├── unit/
+│   │   ├── test_sysmetrics_context.py  # Core plugin logic
+│   │   ├── test_mac_utils.py           # macOS GPU tests
+│   │   └── test_windows_utils.py       # Windows GPU tests
 │   └── integration/              # MLflow integration tests
 ├── scripts/
 │   └── debug_run.py              # Manual testing script
 ├── assets/                       # Image and media assets
 │   └── debug_run.png             # Screenshot of debug script
 ├── pyproject.toml
-└── README.md
+├── README.md
+├── LICENSE                       # Apache 2.0 License
+└── CHANGELOG.md                  # Semantic changelog (Keep a Changelog format)
 ```
 
 ---

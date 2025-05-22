@@ -21,7 +21,7 @@ import psutil
 import subprocess
 
 from mlflow.tracking.context.abstract_context import RunContextProvider
-from mlflow_sysmetrics.constants import (
+from mlflow_sysmetrics.utils.constants import (
     TAG_CPU,
     TAG_CPU_CORES,
     TAG_MEMORY_GB,
@@ -30,7 +30,13 @@ from mlflow_sysmetrics.constants import (
     TAG_GPU,
     TAG_ERROR,
     NVIDIA_SMI_COMMAND,
+    DEFAULT_SUBPROCESS_TIMEOUT,
+    OS_NAME_MAC,
+    OS_NAME_WINDOWS,
+    BYTES_PER_GB,
 )
+from mlflow_sysmetrics.utils.mac import get_macos_gpu_chipset
+from mlflow_sysmetrics.utils.windows import get_windows_gpu_name
 
 
 class SysMetricsRunContextProvider(RunContextProvider):
@@ -62,22 +68,27 @@ class SysMetricsRunContextProvider(RunContextProvider):
 
             # Memory
             memory_bytes = psutil.virtual_memory().total
-            tags[TAG_MEMORY_GB] = str(round(memory_bytes / 1e9, 2))
+            tags[TAG_MEMORY_GB] = str(round(memory_bytes / BYTES_PER_GB, 2))
 
             # Disk
             disk = shutil.disk_usage(os.getcwd())
-            tags[TAG_DISK_FREE_GB] = str(round(disk.free / 1e9, 2))
+            tags[TAG_DISK_FREE_GB] = str(round(disk.free / BYTES_PER_GB, 2))
 
             # GPU
-            try:
-                output = subprocess.check_output(
-                    NVIDIA_SMI_COMMAND,
-                    stderr=subprocess.DEVNULL,
-                    timeout=2,
-                )
-                tags[TAG_GPU] = output.decode("utf-8").strip()
-            except (FileNotFoundError, subprocess.SubprocessError):
-                tags[TAG_GPU] = "None"
+            if platform.system() == OS_NAME_MAC:
+                tags[TAG_GPU] = get_macos_gpu_chipset()
+            elif platform.system() == OS_NAME_WINDOWS:
+                tags[TAG_GPU] = get_windows_gpu_name()
+            else:
+                try:
+                    output = subprocess.check_output(
+                        NVIDIA_SMI_COMMAND,
+                        stderr=subprocess.DEVNULL,
+                        timeout=DEFAULT_SUBPROCESS_TIMEOUT,
+                    )
+                    tags[TAG_GPU] = output.decode("utf-8").strip()
+                except (FileNotFoundError, subprocess.SubprocessError):
+                    tags[TAG_GPU] = "None"
 
         except Exception as e:
             # Catch any unexpected failure and log the error

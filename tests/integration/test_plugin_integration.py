@@ -10,7 +10,7 @@ Requires an accessible MLflow tracking server.
 import mlflow
 import pytest
 
-from mlflow_sysmetrics.constants import TAG_CPU, TAG_MEMORY_GB
+from mlflow_sysmetrics.utils.constants import TAG_CPU, TAG_MEMORY_GB
 
 
 @pytest.mark.integration
