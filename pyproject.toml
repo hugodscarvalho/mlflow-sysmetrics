@@ -1,6 +1,6 @@
 [project]
 name = "mlflow-sysmetrics"
-version = "0.1.2"
+version = "0.1.3"
 description = "An MLflow plugin that automatically logs system-level metrics (CPU, memory, disk, GPU, OS) as run tags for improved experiment observability."
 authors = [
     {name = "Hugo Carvalho",email = "hugodanielsilvacarvalho.hc@gmail.com"}

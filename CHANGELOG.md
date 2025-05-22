@@ -4,6 +4,21 @@ All notable changes to the `mlflow-sysmetrics` package will be documented in thi
 
 This project adheres to [Semantic Versioning](https://semver.org/) and follows changelog conventions inspired by [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v0.1.3] – 2025-05-22
+### Added
+- Cross-platform GPU detection support:
+  - **macOS**: Uses `system_profiler SPDisplaysDataType` to extract the GPU chipset model.
+  - **Windows**: Uses PowerShell's `Get-CimInstance Win32_VideoController` to retrieve GPU name.
+  - **Linux**: Continues to use `nvidia-smi` when available; otherwise falls back to `"None"`.
+
+### Changed
+- Refactored GPU detection logic into OS-specific utility modules for better maintainability.
+- Added constants for GPU detection and subprocess timeouts to `constants.py`.
+- Improved `README.md` to clarify GPU detection behavior on each platform.
+
+### Notes
+- This enhancement improves observability across all major platforms without introducing new dependencies.
+
 ## [v0.1.2] – 2025-05-22
 ### Changed
 - Bumped patch version to trigger v0.1.2 deployment to PyPI.
